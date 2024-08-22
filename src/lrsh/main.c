@@ -5,10 +5,13 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <time.h>
+#include <unistd.h>
+#include <signal.h>
+#include <string.h>
 
 
-
-void comand_hello () {
+void command_hello () {
   pid_t pid  = fork();
   /*En caso de que haya un error*/
   if ( pid > 0) {
@@ -31,6 +34,8 @@ void comand_hello () {
   }
 }
 
+
+/*Para responder a suma*/
 void command_sum(float n1, float n2){
   pid_t pid = fork();
   if (pid == 0){
@@ -40,7 +45,9 @@ void command_sum(float n1, float n2){
   }
 
   else if (pid > 0){
+    
     waitpid(pid, NULL, 0);
+
   }
 
   else {
@@ -48,6 +55,7 @@ void command_sum(float n1, float n2){
   }
 }
 
+/*Funcion para evaluar si es primo*/
 bool primo (int num){
   if (num <= 1){
     return false;
@@ -62,6 +70,8 @@ bool primo (int num){
 
 }
 
+
+/*Para responder a si es primo o no*/
 void command_prime (int numero){
   pid_t pid = fork();
   if (pid == 0){
@@ -85,13 +95,88 @@ void command_prime (int numero){
 }
 
 
+/*Para responder a irexec*/
+void command_irexec (char *archivo, char **args){
+  pid_t pid = fork();
+  if (pid == 0){
+    execvp(archivo, args);
+    printf("Fallo en exec");
+    exit(1);
+  }
+
+  else if (pid > 0){
+    waitpid(pid, NULL, 0);
+
+  }
+
+  else{
+    printf("Error al crear proceso hijo";)
+  }
+}
+
+/*Creo que tenemos que crear Proceso para poder guardar los procesos que se llaman y de esa forma poder entregarlos*/
+typedef struct {
+  pid_t pid;
+  char* nombre;
+  time_t tiempo;
+  int exit_code;  /*Este nose exactamente que es, lo puse porque lo lei*/
+} Proceso;
+
+/*Tenemos que crear un arreglo que contenga cada proceso pero*/
+/*no se cual es la cantidad de procesos a guardar, como para guardar espacio en memoria*/
+
+/*Creamos un int que tenga la cantidad de procesos que se han ejecutado, se tiene que ir actualizando*/
+int cantidad_procesos = 0;
+
+
+/*Aca tenemos que hacer una funcion que vaya agregando los porocesos cada vez que se ejecuta uno nuevo, no entiendo si
+como tenemos que hacer para guardar nombre del ejecutable y todo eso, lo deje a medias*/
+void Nuevo_proceso (pid_t pid, char *nombre_proceso){
+  Procesos[cantidad_procesos].pid = Proceso
+}
+
+/*Hay que hace command_irexit*/
+
+
+
+
+
 
 
 
 
 int main(int argc, char const *argv[])
 {
-  char** input = read_user_input();
-  printf("%s\n", input[0]);
+  /*Esto hace un loop infinito para estar recibiendo comandos todo el rato*/
+  while (1) {
+
+    char** input = read_user_input();
+    printf("%s\n", input[0]);
+    /*Revisamos que no sea un input vacío, si es asi se sigue en el loop*/
+    if (input[0] == NULL){
+      continue;
+    }
+
+    /*Entramos si no es vacío, por eso hay que procesar aca adentro cada caso*/
+    else {
+      if (strcmp(input[0], "hello") ==0 ){
+      command_hello();
+      }
+
+      else if (strcmp(input[0], "sum") == 0){
+      float n1 = atof (input[1]);
+      float n2 = atof (input[2]);
+      command_sum(n1,n2);
+      }
+
+      else if (strcmp(input[0], "is_prime") == 0){
+        int numero = atof(input[1]);
+        command_prime(numero);
+      }
+      /*Hay que seguir con el resto de los comandos que se pueden entregar, falta terminar aun los otros*/
+    }
+  }
+
+
   free_user_input(input);
 }
