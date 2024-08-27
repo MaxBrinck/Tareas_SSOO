@@ -20,7 +20,6 @@ void command_hello () {
     /*Creo que cuando es mayor a cero es porque hay un proceso hijo*/
     /*La idea de waitpid es que el proceso padre espere que el hijo termine, si no lo ponemos significa que el proceso padre puede seguir 
     Haciendo otras cosas y en algun momento le llegara la respuesta del proceso hijo*/
-    waitpid(pid, NULL, 0);
     /*Con esta linea se espera a que termine el proceso hijo*/
   }
 
@@ -41,6 +40,7 @@ void command_hello () {
 void command_sum(float n1, float n2){
   pid_t pid = fork();
   if (pid == 0){
+    sleep(10);
     printf("%f + %f = %f: \n",n1, n2, n1 + n2);
     exit(0);
 
@@ -48,7 +48,6 @@ void command_sum(float n1, float n2){
 
   else if (pid > 0){
     
-    waitpid(pid, NULL, 0);
 
   }
 
@@ -83,7 +82,7 @@ void command_prime (int numero){
   
 
   else if (pid > 0){
-    waitpid(pid, NULL, 0);
+
   }
   
   else{
