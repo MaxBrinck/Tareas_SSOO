@@ -12,11 +12,89 @@
 #define MAX_PROCESOS 16
 
 
+/*Creo que tenemos que crear Proceso para poder guardar los procesos que se llaman y de esa forma poder entregarlos*/
+typedef struct {
+  pid_t pid;
+  char* nombre;
+  time_t tiempo;
+  int exit_code;  /*Este nose exactamente que es, lo puse porque lo lei*/
+} Proceso;
+
+/*Tenemos que crear un arreglo que contenga cada proceso pero*/
+/*no se cual es la cantidad de procesos a guardar, como para guardar espacio en memoria*/ // son 16 creo xd
+
+/*Creamos un int que tenga la cantidad de procesos que se han ejecutado, se tiene que ir actualizando*/
+int cantidad_procesos = 0;
+
+
+/*Aca tenemos que hacer una funcion que vaya agregando los porocesos cada vez que se ejecuta uno nuevo, no entiendo si
+como tenemos que hacer para guardar nombre del ejecutable y todo eso, lo deje a medias*/
+
+Proceso* procesos[MAX_PROCESOS];
+
+
+
+/*Funcion que va a crear nuevos procesos*/
+void Nuevo_proceso(pid_t pid, char *nombre_proceso) {
+    // Manejo memoria proceso
+    Proceso* nuevo_proceso = malloc(sizeof(Proceso));
+    if (!nuevo_proceso) {
+        perror("Error al asignar memoria para el nuevo proceso");
+        exit(1);
+    }
+
+    // Asignar pid
+    nuevo_proceso->pid = pid;
+
+    // Guardar nombre proceso y liberar meemoria
+    nuevo_proceso->nombre = strdup(nombre_proceso);
+    if (!nuevo_proceso->nombre) {
+        perror("Error al duplicar el nombre del proceso");
+        free(nuevo_proceso);  
+        exit(1);
+    }
+
+    // Guardar tiempo de inicio del proceso
+    nuevo_proceso->tiempo = time(NULL);
+    if (nuevo_proceso->tiempo == ((time_t) - 1)) {
+        perror("Error al obtener el tiempo actual");
+        free(nuevo_proceso->nombre);  
+        free(nuevo_proceso);
+        exit(1);
+    }
+
+    nuevo_proceso->exit_code = -1;
+
+    // Guardar el nuevo proceso en el array de procesos
+    procesos[cantidad_procesos] = nuevo_proceso;
+    cantidad_procesos += 1;
+
+    // No pasarse de la cantidad maxima
+    if (cantidad_procesos > MAX_PROCESOS) {
+        fprintf(stderr, "Se ha alcanzado el número máximo de procesos permitidos\n");
+    }
+}
+
+/*Creamos una funcion para encontrar el indice que tiene el proceso en la lista de los procesos*/
+/*La habia hecho para poder buscar los procesos y así asignarles su nuevo tiempo pero ya no sirve, te tengo que explicar*/
+int find_proceso(pid_t pid){
+  for(int i = 0; i < cantidad_procesos; i++){
+    if (procesos[i]->pid == pid){
+      return i;
+    }
+  }
+  return -1;
+}
+
+
+
 
 void command_hello () {
   pid_t pid  = fork();
   /*En caso de que haya un error*/
   if ( pid > 0) {
+    Nuevo_proceso(pid, "Hello Ejecutado");
+
     /*Creo que cuando es mayor a cero es porque hay un proceso hijo*/
     /*La idea de waitpid es que el proceso padre espere que el hijo termine, si no lo ponemos significa que el proceso padre puede seguir 
     Haciendo otras cosas y en algun momento le llegara la respuesta del proceso hijo*/
@@ -24,6 +102,7 @@ void command_hello () {
   }
 
   else if ( pid == 0) {
+    sleep(15);
     printf("Hello world!\n");
     exit(0);
   }
@@ -31,7 +110,7 @@ void command_hello () {
   else {
     /*En caso de que haya un error*/
     /*Lo otro que vi es que en general se usa "perror" en vez de printf para cuando es error*/
-    printf("Error al crear proceso hijo\n");
+    perror("Error al crear proceso hijo\n");
   }
 }
 
@@ -47,6 +126,7 @@ void command_sum(float n1, float n2){
   }
 
   else if (pid > 0){
+    Nuevo_proceso(pid,"Comando suma");
     
 
   }
@@ -77,11 +157,12 @@ void command_prime (int numero){
     else {
       printf("%d No es un número primo\n", numero);
     }
-  exit(0);
+    exit(0);
   }
   
 
   else if (pid > 0){
+    Nuevo_proceso(pid,"Verificacion primo");
 
   }
   
@@ -91,28 +172,6 @@ void command_prime (int numero){
 }
 
 
-/*Para responder a irexec*/
-
-
-/*Creo que tenemos que crear Proceso para poder guardar los procesos que se llaman y de esa forma poder entregarlos*/
-typedef struct {
-  pid_t pid;
-  char* nombre;
-  time_t tiempo;
-  int exit_code;  /*Este nose exactamente que es, lo puse porque lo lei*/
-} Proceso;
-
-/*Tenemos que crear un arreglo que contenga cada proceso pero*/
-/*no se cual es la cantidad de procesos a guardar, como para guardar espacio en memoria*/ // son 16 creo xd
-
-/*Creamos un int que tenga la cantidad de procesos que se han ejecutado, se tiene que ir actualizando*/
-int cantidad_procesos = 0;
-
-
-/*Aca tenemos que hacer una funcion que vaya agregando los porocesos cada vez que se ejecuta uno nuevo, no entiendo si
-como tenemos que hacer para guardar nombre del ejecutable y todo eso, lo deje a medias*/
-
-Proceso* procesos[MAX_PROCESOS];
 
 void command_lrlist() {
     printf("Lista de procesos corriendo \n");
@@ -122,58 +181,17 @@ void command_lrlist() {
     for (int i = 0; i < cantidad_procesos; i++) {
         Proceso* p = procesos[i];  
 
-        // Calcular el tiempo de ejecucion
-        time_t tiempo_ejecucion = time(NULL) - p->tiempo;
-
         // Imprimir la info del proceso:
-        printf("PID: %d, Name: %s, Time running: %ld seconds, Exit Code: %d\n", 
+        printf("PID: %d, Nombre: %s, Tiempo corriendo: %.2ld segundos, Exit Code: %d\n", 
                p->pid,        
                p->nombre,     
-               tiempo_ejecucion,  
+               p->tiempo,  
                p->exit_code   
         );
     }
     printf("\n");
 }
-void Nuevo_proceso(pid_t pid, char *nombre_proceso) {
-    // Manejo memoria proceso
-    Proceso* nuevo_proceso = malloc(sizeof(Proceso));
-    if (!nuevo_proceso) {
-        perror("Error al asignar memoria para el nuevo proceso");
-        exit(1);
-    }
 
-    // Asignar pid
-    nuevo_proceso->pid = pid;
-
-    // Guardar nombre proceso y liberar meemoria
-    nuevo_proceso->nombre = strdup(nombre_proceso);
-    if (!nuevo_proceso->nombre) {
-        perror("Error al duplicar el nombre del proceso");
-        free(nuevo_proceso);  
-        exit(1);
-    }
-
-    // Guardar tiempo de inicio del proceso
-    nuevo_proceso->tiempo = time(NULL);
-    if (nuevo_proceso->tiempo == ((time_t) - 1)) {
-        perror("Error al obtener el tiempo actual");
-        free(nuevo_proceso->nombre);  
-        free(nuevo_proceso);
-        exit(1);
-    }
-
-    // El codigo de salida es -1 ya que proceso no ha empezado
-    nuevo_proceso->exit_code = -1;
-
-    // Guardar el nuevo proceso en el array de procesos
-    procesos[cantidad_procesos++] = nuevo_proceso;
-
-    // No pasarse de la cantidad maxima
-    if (cantidad_procesos > MAX_PROCESOS) {
-        fprintf(stderr, "Se ha alcanzado el número máximo de procesos permitidos\n");
-    }
-}
 
 void command_lrexec (char *archivo, char **args){
   pid_t pid = fork();
