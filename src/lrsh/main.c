@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <string.h>
+#include <stddef.h>
 #define MAX_PROCESOS 16
 
 
@@ -220,23 +221,20 @@ void command_lrlist() {
 }
 
 
-void command_lrexec (char *archivo, char **args){
-  pid_t pid = fork();
-  if (pid == 0){
-    execvp(archivo, args);
-    printf("Fallo en exec");
-    exit(1);
-  }
-
-  else if (pid > 0){
-    // waitpid(pid, NULL, 0); // saqué esto no se para que servia xd
-    Nuevo_proceso(pid, archivo);
-  }
-
-  else{
-    // printf("Error al crear proceso hijo"); // tambien saque esto pq el perror creo q hace un exit 
-    perror("Error al crear proceso hijo");
-  }
+void command_lrexec(char *archivo, char **args) {
+    pid_t pid = fork();
+    if (pid == 0) {
+        // El proceso hijo ejecutará el archivo
+        execvp(archivo, args);
+        perror("Error en execvp");  // Muestra el error si execvp falla
+        exit(EXIT_FAILURE);
+    } else if (pid > 0) {
+        // El proceso padre guarda información del proceso
+        Nuevo_proceso(pid, archivo);
+    } else {
+        // Manejo de error al crear el proceso hijo
+        perror("Error al crear proceso hijo");
+    }
 }
 
 void command_lrexit() {
