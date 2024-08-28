@@ -25,12 +25,49 @@ typedef struct {
 
 /*Creamos un int que tenga la cantidad de procesos que se han ejecutado, se tiene que ir actualizando*/
 int cantidad_procesos = 0;
-
-
-/*Aca tenemos que hacer una funcion que vaya agregando los porocesos cada vez que se ejecuta uno nuevo, no entiendo si
-como tenemos que hacer para guardar nombre del ejecutable y todo eso, lo deje a medias*/
-
 Proceso* procesos[MAX_PROCESOS];
+
+
+
+/*Creamos una funcion para encontrar el indice que tiene el proceso en la lista de los procesos*/
+int find_proceso(pid_t pid){
+  for(int i = 0; i < cantidad_procesos; i++){
+    if (procesos[i]->pid == pid){
+      return i;
+    }
+  }
+  return -1;
+}
+
+/*Creamos un signal handler que nos va a permitir saber cuando los procesos hijos terminen para poder actualizar el tiempo de ejecucion
+Cuando está en ejecucion este tiempo corresponde al tiempo en que inicio y cuando termina la ejecucion se cambia a tiempo que demoró*/
+void sigchld_handler(int signo){
+  (void) signo;
+  int status;
+  pid_t pid;
+
+  while ((pid = waitpid(-1, &status, WNOHANG)) > 0){
+    /*Manejo de terminacion de un proceso hijo*/
+    /*Guardamos el tiempo en que el proceso ha terminado, calculamos la dif entre inicial y final y lo guardamos en el atributo de tiempo*/
+    int index = find_proceso(pid);
+    time_t final = time(NULL);
+    if (index != -1){
+      Proceso* p = procesos[index];
+      double definitivo = difftime(final, p->tiempo);
+      p->tiempo = definitivo;
+      if (WIFEXITED(status)){
+        p->exit_code = WEXITSTATUS(status);
+      }
+      else {
+        p->exit_code = -1;
+      }
+    }
+  }
+
+}
+
+
+
 
 
 
@@ -75,16 +112,6 @@ void Nuevo_proceso(pid_t pid, char *nombre_proceso) {
     }
 }
 
-/*Creamos una funcion para encontrar el indice que tiene el proceso en la lista de los procesos*/
-/*La habia hecho para poder buscar los procesos y así asignarles su nuevo tiempo pero ya no sirve, te tengo que explicar*/
-int find_proceso(pid_t pid){
-  for(int i = 0; i < cantidad_procesos; i++){
-    if (procesos[i]->pid == pid){
-      return i;
-    }
-  }
-  return -1;
-}
 
 
 
@@ -282,6 +309,19 @@ void command_lrexit() {
 
 int main(int argc, char const *argv[])
 {
+
+  /*Esto no lo entiendo muy bien, pero lo que hace es como instanaicar la wea para llamar al handler cuando un proceso termina
+  La idea es que se llama al handler cuando termina un proceso cualquiera, no uno en especifico*/
+  struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = sigchld_handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+    if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+        perror("sigaction");
+        exit(EXIT_FAILURE);
+    }
+    
   char** input;
   /*Esto hace un loop infinito para estar recibiendo comandos todo el rato*/
   while (1) {
