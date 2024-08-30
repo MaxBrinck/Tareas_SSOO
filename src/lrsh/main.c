@@ -131,7 +131,7 @@ void command_hello () {
 
   else if ( pid == 0) {
     sleep(15);
-    printf("Hello world!\n");
+    printf("\nHello world!\n");
     exit(0);
   }
 
@@ -148,7 +148,7 @@ void command_sum(float n1, float n2){
   pid_t pid = fork();
   if (pid == 0){
     sleep(10);
-    printf("%f + %f = %f: \n",n1, n2, n1 + n2);
+    printf("\nEl resultado de la suma %f + %f es %f\n",n1, n2, n1 + n2);
     exit(0);
 
   }
@@ -180,10 +180,10 @@ void command_prime (int numero){
   pid_t pid = fork();
   if (pid == 0){
     if (primo(numero)){
-      printf("%d Es un número primo\n", numero);
+      printf("\nEl numero %d, es un número primo\n", numero);
     }
     else {
-      printf("%d No es un número primo\n", numero);
+      printf("\nEl número %d, no es un número primo\n", numero);
     }
     exit(0);
   }
@@ -195,27 +195,57 @@ void command_prime (int numero){
   }
   
   else{
-    printf("Error al crear el proces hijo");
+    printf("Error al crear el proces hijo\n");
   }
 }
 
 
 
 void command_lrlist() {
-    printf("Lista de procesos corriendo \n");
-    printf("\n");
+    printf("\nLista de procesos\n");
+    printf("------------------------------\n");
 
     // Recorrer todos los procesos
+    printf("Procesos en ejecucion\n");
     for (int i = 0; i < cantidad_procesos; i++) {
-        Proceso* p = procesos[i];  
+      Proceso* p = procesos[i];  
 
-        // Imprimir la info del proceso:
-        printf("PID: %d, Nombre: %s, Tiempo corriendo: %.2ld segundos, Exit Code: %d\n", 
+
+
+
+
+    /*Hay que escribir en un readme que exit code "-1" significa que está corriendo, porque un exit code -1 no es valido, 
+    lo hicismos nosotros para entregarle algo a los que corren, creo que al estar corriendo no tienen exitcode*/
+
+
+
+
+
+
+
+      // Imprimir la info del proceso:
+      if (p->exit_code == -1){
+        printf("PID: %d, Nombre: %s, Tiempo en que se ejecutó: %.2ld segundos, Exit Code: %d\n", 
+              p->pid,        
+              p->nombre,     
+              p->tiempo,  
+              p->exit_code   
+              );
+      }
+    }
+    printf("---------------------\n");
+
+    printf("Procesos finalizados\n");
+    for (int i = 0; i < cantidad_procesos; i++){
+      Proceso* p = procesos[i];;
+        if (p->exit_code != -1) {
+          printf("PID: %d, Nombre: %s, Tiempo corriendo: %.2ld segundos, Exit Code: %d\n", 
                p->pid,        
                p->nombre,     
                p->tiempo,  
                p->exit_code   
         );
+        }
     }
     printf("\n");
 }
@@ -297,8 +327,18 @@ void command_lrexit() {
         free(procesos[i]->nombre);  
         free(procesos[i]);         
     }
+    printf("\n    _____  \n");
+    printf("   /       \\  \n");
+    printf("  |  () ()  | \n");
+    printf("   \\   ^   /  \n");
+    printf("    \\ --- /  \n");
+    printf("      |||   \n");
+    printf("     / | \\  \n");
+    printf("    /  |  \\ \n");
+    printf("      / \\   \n");
+    printf("     /   \\   \n");
 
-    printf("Cerrando lrsh. Muchas gracias \n");
+    printf("\nCerrando lrsh. Muchas gracias \n");
     exit(0);  
 }
 
